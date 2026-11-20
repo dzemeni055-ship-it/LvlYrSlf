@@ -1,0 +1,1486 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Level Yourself — IRL RPG System</title>
+    <script>
+        window.tailwind = {
+            config: {
+                corePlugins: {
+                    preflight: true,
+                }
+            }
+        };
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Rajdhani:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --bg-dark: #0b0f19;
+            --card-dark: #131b2e;
+            --card-border: #1e293b;
+            --neon-green: #00ff66;
+            --neon-blue: #00d2ff;
+            --neon-purple: #9d4edd;
+            --neon-gold: #ffd700;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: #f8fafc;
+            font-family: 'Inter', sans-serif;
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(0, 255, 102, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 85% 85%, rgba(0, 210, 255, 0.05) 0%, transparent 40%);
+            background-attachment: fixed;
+            overflow-x: hidden;
+        }
+
+        .font-orbitron { font-family: 'Orbitron', sans-serif; }
+        .font-rajdhani { font-family: 'Rajdhani', sans-serif; }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #0d1322;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #00ff66;
+        }
+
+        @keyframes floatUpFade {
+            0% {
+                opacity: 1;
+                transform: translate(-50%, 0) scale(1);
+            }
+            50% {
+                transform: translate(-50%, -35px) scale(1.2);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -70px) scale(0.9);
+            }
+        }
+
+        .xp-pop {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 800;
+            color: var(--neon-green);
+            text-shadow: 0 0 12px rgba(0, 255, 102, 0.9);
+            animation: floatUpFade 1.2s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+        }
+
+        .levelup-anim {
+            animation: pulseGlow 1.5s infinite alternate;
+        }
+
+        @keyframes pulseGlow {
+            0% { box-shadow: 0 0 20px rgba(0, 255, 102, 0.4); }
+            100% { box-shadow: 0 0 50px rgba(0, 255, 102, 0.9); }
+        }
+
+        .nav-tab.active {
+            color: #00ff66;
+            background: rgba(0, 255, 102, 0.08);
+            border-color: #00ff66;
+        }
+
+        .mobile-nav-tab.active {
+            color: #00ff66;
+        }
+        .mobile-nav-tab.active .nav-indicator {
+            opacity: 1;
+            transform: scaleX(1);
+        }
+
+        </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between custom-scrollbar selection:bg-emerald-500 selection:text-black pb-20 md:pb-0">
+
+    <!-- TOP HEADER / PLAYER STATS BAR -->
+    <header class="sticky top-0 z-40 bg-[#0b0f19]/95 backdrop-blur-md border-b border-slate-800 px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-2.5 md:gap-4">
+            
+            <!-- Logo, Rank & Mobile Quick Stats -->
+            <div class="flex items-center gap-2 w-full md:w-auto justify-between">
+                <div class="flex items-center gap-2.5 min-w-0">
+                    <div class="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-xl bg-gradient-to-tr from-emerald-500 to-cyan-500 flex items-center justify-center font-orbitron font-black text-black text-lg sm:text-xl shadow-[0_0_15px_rgba(0,255,102,0.4)]">
+                        LY
+                    </div>
+                    <div class="min-w-0">
+                        <h1 class="font-orbitron font-bold text-sm sm:text-lg tracking-wider text-white truncate">LEVEL YOURSELF</h1>
+                        <span id="rank-badge" class="inline-block text-[10px] sm:text-xs font-rajdhani font-semibold text-emerald-400 tracking-widest uppercase bg-emerald-950/60 border border-emerald-500/30 px-1.5 sm:px-2 py-0.5 rounded">
+                            НОВИЧОК
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Quick Stats & Settings (Mobile visible) -->
+                <div class="flex items-center gap-1.5 sm:gap-2 md:hidden shrink-0">
+                    <div class="flex items-center gap-1 bg-slate-900/90 px-2 py-1 rounded-lg border border-slate-800 text-amber-400 font-bold text-xs" title="Стрик">
+                        <i class="fa-solid fa-fire"></i>
+                        <span id="streak-count-mobile">0</span>
+                    </div>
+                    <div class="flex items-center gap-1 bg-slate-900/90 px-2 py-1 rounded-lg border border-slate-800 text-cyan-400 font-bold text-xs" title="Очки навыков SP">
+                        <i class="fa-solid fa-gem"></i>
+                        <span id="sp-count-mobile">0</span>
+                    </div>
+                    <button type="button" onclick="openSettingsModal()" aria-label="Настройки" class="p-1.5 text-slate-400 hover:text-white bg-slate-900/90 border border-slate-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-gear text-sm"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- XP Progress Bar (Center Piece) -->
+            <div class="w-full md:max-w-xl flex flex-col gap-1">
+                <div class="flex justify-between items-center text-[11px] sm:text-xs font-orbitron">
+                    <span class="text-emerald-400 font-bold flex items-center gap-1.5">
+                        <i class="fa-solid fa-crown text-yellow-400"></i>
+                        УР. <span id="player-level" class="text-white text-sm sm:text-base">1</span>
+                    </span>
+                    <span class="text-slate-400">
+                        <span id="current-xp" class="text-emerald-400 font-semibold">0</span> / <span id="next-level-xp">250</span> XP
+                    </span>
+                </div>
+                <div class="w-full bg-slate-800/80 rounded-full h-2.5 sm:h-3.5 p-0.5 border border-slate-700/60 relative overflow-hidden">
+                    <div id="xp-bar" class="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 rounded-full transition-all duration-500 shadow-[0_0_10px_rgba(0,255,102,0.5)]" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Quick Stats & Actions (Desktop) -->
+            <div class="hidden md:flex items-center gap-4 lg:gap-6 shrink-0">
+                <div class="flex items-center gap-2 bg-slate-900/80 px-3 py-1.5 rounded-lg border border-slate-800" title="Серия дней активности">
+                    <i class="fa-solid fa-fire text-amber-500 text-lg"></i>
+                    <div>
+                        <div class="text-[10px] text-slate-400 font-bold tracking-wider">СТРИК</div>
+                        <div class="text-sm font-bold text-white leading-none"><span id="streak-count">0</span> дн.</div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 bg-slate-900/80 px-3 py-1.5 rounded-lg border border-slate-800" title="Очки навыков доступно">
+                    <i class="fa-solid fa-gem text-cyan-400 text-lg"></i>
+                    <div>
+                        <div class="text-[10px] text-slate-400 font-bold tracking-wider">ОЧКИ SP</div>
+                        <div class="text-sm font-bold text-cyan-400 leading-none" id="sp-count">0</div>
+                    </div>
+                </div>
+
+                <button type="button" onclick="openSettingsModal()" class="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
+                    <i class="fa-solid fa-gear text-lg"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- NAVIGATION TABS BAR (DESKTOP) -->
+    <div class="hidden md:block sticky top-[68px] z-30">
+        <nav class="bg-[#0f172a]/95 border-b border-slate-800 backdrop-blur-md">
+            <div class="max-w-7xl mx-auto px-4 lg:px-8 flex justify-start gap-2 overflow-x-auto no-scrollbar py-2">
+                <button type="button" onclick="switchTab('dashboard')" id="tab-dashboard" class="nav-tab active flex items-center gap-2 px-4 py-2 rounded-lg border border-transparent font-rajdhani font-bold text-sm tracking-wide text-slate-400 hover:text-white transition-all whitespace-nowrap shrink-0">
+                    <i class="fa-solid fa-border-all"></i> ОБЗОР
+                </button>
+                <button type="button" onclick="switchTab('quests')" id="tab-quests" class="nav-tab flex items-center gap-2 px-4 py-2 rounded-lg border border-transparent font-rajdhani font-bold text-sm tracking-wide text-slate-400 hover:text-white transition-all whitespace-nowrap shrink-0">
+                    <i class="fa-solid fa-scroll"></i> КВЕСТЫ
+                </button>
+                <button type="button" onclick="switchTab('skills')" id="tab-skills" class="nav-tab flex items-center gap-2 px-4 py-2 rounded-lg border border-transparent font-rajdhani font-bold text-sm tracking-wide text-slate-400 hover:text-white transition-all whitespace-nowrap shrink-0">
+                    <i class="fa-solid fa-sitemap"></i> ДЕРЕВО НАВЫКОВ
+                </button>
+                <button type="button" onclick="switchTab('achievements')" id="tab-achievements" class="nav-tab flex items-center gap-2 px-4 py-2 rounded-lg border border-transparent font-rajdhani font-bold text-sm tracking-wide text-slate-400 hover:text-white transition-all whitespace-nowrap shrink-0">
+                    <i class="fa-solid fa-trophy"></i> ДОСТИЖЕНИЯ
+                </button>
+                <button type="button" onclick="switchTab('analytics')" id="tab-analytics" class="nav-tab flex items-center gap-2 px-4 py-2 rounded-lg border border-transparent font-rajdhani font-bold text-sm tracking-wide text-slate-400 hover:text-white transition-all whitespace-nowrap shrink-0">
+                    <i class="fa-solid fa-chart-column"></i> СТАТИСТИКА
+                </button>
+            </div>
+        </nav>
+    </div>
+
+    <!-- MOBILE BOTTOM NAVIGATION BAR -->
+    <div class="md:hidden fixed bottom-0 left-0 right-0 z-40">
+        <nav class="bg-[#0b0f19]/95 backdrop-blur-lg border-t border-slate-800 px-1 py-1">
+            <div class="grid grid-cols-5 gap-0.5">
+                <button type="button" onclick="switchTab('dashboard')" id="m-tab-dashboard" class="mobile-nav-tab active relative flex flex-col items-center justify-center py-1.5 text-slate-400 hover:text-white transition-colors">
+                    <span class="nav-indicator absolute top-0 w-6 h-0.5 bg-emerald-400 rounded-full opacity-0 transition-all"></span>
+                    <i class="fa-solid fa-border-all text-base mb-0.5"></i>
+                    <span class="text-[10px] font-rajdhani font-bold tracking-tight">Обзор</span>
+                </button>
+                <button type="button" onclick="switchTab('quests')" id="m-tab-quests" class="mobile-nav-tab relative flex flex-col items-center justify-center py-1.5 text-slate-400 hover:text-white transition-colors">
+                    <span class="nav-indicator absolute top-0 w-6 h-0.5 bg-emerald-400 rounded-full opacity-0 transition-all"></span>
+                    <i class="fa-solid fa-scroll text-base mb-0.5"></i>
+                    <span class="text-[10px] font-rajdhani font-bold tracking-tight">Квесты</span>
+                </button>
+                <button type="button" onclick="switchTab('skills')" id="m-tab-skills" class="mobile-nav-tab relative flex flex-col items-center justify-center py-1.5 text-slate-400 hover:text-white transition-colors">
+                    <span class="nav-indicator absolute top-0 w-6 h-0.5 bg-emerald-400 rounded-full opacity-0 transition-all"></span>
+                    <i class="fa-solid fa-sitemap text-base mb-0.5"></i>
+                    <span class="text-[10px] font-rajdhani font-bold tracking-tight">Навыки</span>
+                </button>
+                <button type="button" onclick="switchTab('achievements')" id="m-tab-achievements" class="mobile-nav-tab relative flex flex-col items-center justify-center py-1.5 text-slate-400 hover:text-white transition-colors">
+                    <span class="nav-indicator absolute top-0 w-6 h-0.5 bg-emerald-400 rounded-full opacity-0 transition-all"></span>
+                    <i class="fa-solid fa-trophy text-base mb-0.5"></i>
+                    <span class="text-[10px] font-rajdhani font-bold tracking-tight">Ачивки</span>
+                </button>
+                <button type="button" onclick="switchTab('analytics')" id="m-tab-analytics" class="mobile-nav-tab relative flex flex-col items-center justify-center py-1.5 text-slate-400 hover:text-white transition-colors">
+                    <span class="nav-indicator absolute top-0 w-6 h-0.5 bg-emerald-400 rounded-full opacity-0 transition-all"></span>
+                    <i class="fa-solid fa-chart-column text-base mb-0.5"></i>
+                    <span class="text-[10px] font-rajdhani font-bold tracking-tight">Статы</span>
+                </button>
+            </div>
+        </nav>
+    </div>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="max-w-7xl mx-auto w-full px-3 sm:px-6 lg:px-8 py-4 sm:py-6 flex-grow">
+
+        <!-- ==================== TAB 1: DASHBOARD ==================== -->
+        <section id="page-dashboard" class="tab-page space-y-5 sm:space-y-6">
+            
+            <!-- Daily Quote / Motivation Banner -->
+            <div class="relative overflow-hidden bg-gradient-to-r from-slate-900 via-[#131b2e] to-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl">
+                <div class="absolute -right-6 -bottom-6 sm:-right-10 sm:-bottom-10 opacity-10 text-emerald-400 pointer-events-none">
+                    <i class="fa-solid fa-dragon text-7xl sm:text-9xl"></i>
+                </div>
+                <div class="relative z-10 max-w-2xl">
+                    <div class="text-[11px] sm:text-xs font-orbitron font-semibold text-emerald-400 tracking-wider mb-1 uppercase">Дневная Установка</div>
+                    <h2 id="daily-quote" class="text-lg sm:text-2xl font-bold text-white mb-1.5 sm:mb-2 font-rajdhani leading-snug">«Дисциплина — это мост между целями и их достижением.»</h2>
+                    <p class="text-slate-400 text-xs sm:text-sm">Выполняй ежедневные квесты и качай атрибуты. Сложность и награды автоматически растут вместе с твоим уровнем!</p>
+                </div>
+            </div>
+
+            <!-- Attributes Overview Cards -->
+            <div>
+                <h3 class="font-orbitron font-bold text-sm sm:text-lg text-white mb-3 sm:mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-shield-halved text-emerald-400"></i> БАЛАНС АТРИБУТОВ
+                </h3>
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                    
+                    <!-- BODY -->
+                    <div class="bg-[#131b2e] border border-slate-800 rounded-xl p-3.5 sm:p-5 relative hover:border-emerald-500/50 transition-all">
+                        <div class="flex items-center justify-between mb-2.5 sm:mb-3">
+                            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400">
+                                <i class="fa-solid fa-dumbbell text-sm sm:text-lg"></i>
+                            </div>
+                            <span class="font-orbitron text-[10px] sm:text-xs text-red-400 font-bold bg-red-950/40 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded">Ур. <span id="attr-lvl-body">1</span></span>
+                        </div>
+                        <h4 class="font-rajdhani font-bold text-base sm:text-lg text-white">ТЕЛО</h4>
+                        <p class="text-[11px] sm:text-xs text-slate-400 mb-2.5 sm:mb-3 truncate">Сила, выносливость</p>
+                        <div class="w-full bg-slate-800 h-1.5 sm:h-2 rounded-full overflow-hidden">
+                            <div id="attr-bar-body" class="bg-red-500 h-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                        <div class="text-right text-[10px] sm:text-[11px] text-slate-400 mt-1 font-orbitron"><span id="attr-xp-body">0</span> XP</div>
+                    </div>
+
+                    <!-- MIND -->
+                    <div class="bg-[#131b2e] border border-slate-800 rounded-xl p-3.5 sm:p-5 relative hover:border-emerald-500/50 transition-all">
+                        <div class="flex items-center justify-between mb-2.5 sm:mb-3">
+                            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+                                <i class="fa-solid fa-brain text-sm sm:text-lg"></i>
+                            </div>
+                            <span class="font-orbitron text-[10px] sm:text-xs text-cyan-400 font-bold bg-cyan-950/40 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded">Ур. <span id="attr-lvl-mind">1</span></span>
+                        </div>
+                        <h4 class="font-rajdhani font-bold text-base sm:text-lg text-white">УМ</h4>
+                        <p class="text-[11px] sm:text-xs text-slate-400 mb-2.5 sm:mb-3 truncate">Знания, логика, фокус</p>
+                        <div class="w-full bg-slate-800 h-1.5 sm:h-2 rounded-full overflow-hidden">
+                            <div id="attr-bar-mind" class="bg-cyan-400 h-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                        <div class="text-right text-[10px] sm:text-[11px] text-slate-400 mt-1 font-orbitron"><span id="attr-xp-mind">0</span> XP</div>
+                    </div>
+
+                    <!-- SPIRIT -->
+                    <div class="bg-[#131b2e] border border-slate-800 rounded-xl p-3.5 sm:p-5 relative hover:border-emerald-500/50 transition-all">
+                        <div class="flex items-center justify-between mb-2.5 sm:mb-3">
+                            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400">
+                                <i class="fa-solid fa-bolt text-sm sm:text-lg"></i>
+                            </div>
+                            <span class="font-orbitron text-[10px] sm:text-xs text-purple-400 font-bold bg-purple-950/40 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded">Ур. <span id="attr-lvl-spirit">1</span></span>
+                        </div>
+                        <h4 class="font-rajdhani font-bold text-base sm:text-lg text-white">ДУХ</h4>
+                        <p class="text-[11px] sm:text-xs text-slate-400 mb-2.5 sm:mb-3 truncate">Воля, осознанность</p>
+                        <div class="w-full bg-slate-800 h-1.5 sm:h-2 rounded-full overflow-hidden">
+                            <div id="attr-bar-spirit" class="bg-purple-500 h-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                        <div class="text-right text-[10px] sm:text-[11px] text-slate-400 mt-1 font-orbitron"><span id="attr-xp-spirit">0</span> XP</div>
+                    </div>
+
+                    <!-- SOCIAL -->
+                    <div class="bg-[#131b2e] border border-slate-800 rounded-xl p-3.5 sm:p-5 relative hover:border-emerald-500/50 transition-all">
+                        <div class="flex items-center justify-between mb-2.5 sm:mb-3">
+                            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                                <i class="fa-solid fa-users text-sm sm:text-lg"></i>
+                            </div>
+                            <span class="font-orbitron text-[10px] sm:text-xs text-amber-400 font-bold bg-amber-950/40 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded">Ур. <span id="attr-lvl-social">1</span></span>
+                        </div>
+                        <h4 class="font-rajdhani font-bold text-base sm:text-lg text-white">СОЦИУМ</h4>
+                        <p class="text-[11px] sm:text-xs text-slate-400 mb-2.5 sm:mb-3 truncate">Коммуникация, связи</p>
+                        <div class="w-full bg-slate-800 h-1.5 sm:h-2 rounded-full overflow-hidden">
+                            <div id="attr-bar-social" class="bg-amber-400 h-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                        <div class="text-right text-[10px] sm:text-[11px] text-slate-400 mt-1 font-orbitron"><span id="attr-xp-social">0</span> XP</div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Quick Quests & Activity Feed Layout -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6">
+                <!-- Today's Priority Quests (2 cols) -->
+                <div class="lg:col-span-2 bg-[#131b2e] border border-slate-800 rounded-2xl p-4 sm:p-6">
+                    <div class="flex justify-between items-center gap-2 mb-4">
+                        <h3 class="font-orbitron font-bold text-xs sm:text-base text-white flex items-center gap-2">
+                            <i class="fa-solid fa-fire text-amber-500"></i> КВЕСТЫ НА СЕГОДНЯ
+                        </h3>
+                        <button type="button" onclick="switchTab('quests')" class="text-xs font-rajdhani font-bold text-emerald-400 hover:underline whitespace-nowrap">
+                            ВСЕ КВЕСТЫ <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+
+                    <div id="dash-quests-container" class="space-y-3"></div>
+                </div>
+
+                <!-- Recent Activity / Logs (1 col) -->
+                <div class="bg-[#131b2e] border border-slate-800 rounded-2xl p-4 sm:p-6 flex flex-col justify-between">
+                    <div>
+                        <h3 class="font-orbitron font-bold text-xs sm:text-base text-white mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-list-check text-cyan-400"></i> ЖУРНАЛ СОБЫТИЙ
+                        </h3>
+                        <div id="activity-log" class="space-y-3 text-xs custom-scrollbar max-h-60 overflow-y-auto pr-1">
+                            <div class="text-slate-500 text-center py-4">История активности пуста. Выполни первый квест!</div>
+                        </div>
+                    </div>
+                    
+                    <button type="button" onclick="triggerDailyReset()" class="mt-4 w-full bg-slate-800 hover:bg-slate-700 active:scale-[0.99] border border-slate-700 text-slate-200 py-2.5 px-3 rounded-xl font-rajdhani font-bold text-xs tracking-wider transition-all flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-arrows-rotate text-emerald-400"></i> СГЕНЕРИРОВАТЬ НОВЫЕ КВЕСТЫ
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== TAB 2: QUESTS ==================== -->
+        <section id="page-quests" class="tab-page hidden space-y-5 sm:space-y-6">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-[#131b2e] border border-slate-800 p-4 sm:p-5 rounded-2xl">
+                <div>
+                    <h2 class="font-orbitron font-bold text-lg sm:text-xl text-white">ДОСКА КВЕСТОВ</h2>
+                    <p class="text-xs text-slate-400">Автоматическая генерация задач под твой уровень (<span id="quests-lvl-label" class="text-emerald-400 font-bold">Ур. 1</span>)</p>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2 sm:gap-3 w-full md:w-auto">
+                    <select id="quest-filter" onchange="renderQuests()" class="flex-grow sm:flex-grow-0 bg-slate-900 border border-slate-700 text-slate-300 text-xs rounded-xl px-3 py-2.5 font-rajdhani font-bold outline-none focus:border-emerald-500">
+                        <option value="all">Все категории</option>
+                        <option value="daily">Ежедневные</option>
+                        <option value="main">Сюжетные</option>
+                        <option value="hardcore">Хардкор</option>
+                    </select>
+
+                    <button type="button" onclick="triggerDailyReset()" title="Сгенерировать новый набор квестов" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-emerald-400 font-rajdhani font-bold text-xs px-3 py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 whitespace-nowrap">
+                        <i class="fa-solid fa-dice"></i> ОБНОВИТЬ
+                    </button>
+
+                    <button type="button" onclick="openCustomQuestModal()" class="flex-grow sm:flex-grow-0 bg-emerald-500 hover:bg-emerald-400 text-black font-rajdhani font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow-[0_0_15px_rgba(0,255,102,0.3)] flex items-center justify-center gap-1.5 whitespace-nowrap">
+                        <i class="fa-solid fa-plus text-sm"></i> СОЗДАТЬ
+                    </button>
+                </div>
+            </div>
+
+            <div id="quests-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </section>
+
+        <!-- ==================== TAB 3: SKILL TREE ==================== -->
+        <section id="page-skills" class="tab-page hidden space-y-5 sm:space-y-6">
+            <div class="bg-[#131b2e] border border-slate-800 p-4 sm:p-6 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h2 class="font-orbitron font-bold text-lg sm:text-xl text-white">ДЕРЕВО НАВЫКОВ</h2>
+                    <p class="text-xs text-slate-400">Трать очки навыков (SP) на открытие пассивных бонусов к опыту</p>
+                </div>
+                <div class="bg-slate-900 px-4 py-2 rounded-xl border border-cyan-500/30 flex items-center gap-3 self-stretch sm:self-auto justify-between sm:justify-start">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-gem text-cyan-400 text-lg"></i>
+                        <div class="text-[11px] text-slate-400 font-bold">ДОСТУПНО SP:</div>
+                    </div>
+                    <div id="skill-tree-sp" class="font-orbitron text-lg font-bold text-cyan-400">0</div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                <div class="bg-[#131b2e]/60 border border-red-500/20 rounded-2xl p-4 sm:p-5 space-y-3 sm:space-y-4">
+                    <h3 class="font-orbitron text-sm font-bold text-red-400 flex items-center gap-2">
+                        <i class="fa-solid fa-dumbbell"></i> ВЕТКА ТЕЛА
+                    </h3>
+                    <div id="tree-body" class="space-y-3"></div>
+                </div>
+
+                <div class="bg-[#131b2e]/60 border border-cyan-500/20 rounded-2xl p-4 sm:p-5 space-y-3 sm:space-y-4">
+                    <h3 class="font-orbitron text-sm font-bold text-cyan-400 flex items-center gap-2">
+                        <i class="fa-solid fa-brain"></i> ВЕТКА УМА
+                    </h3>
+                    <div id="tree-mind" class="space-y-3"></div>
+                </div>
+
+                <div class="bg-[#131b2e]/60 border border-purple-500/20 rounded-2xl p-4 sm:p-5 space-y-3 sm:space-y-4">
+                    <h3 class="font-orbitron text-sm font-bold text-purple-400 flex items-center gap-2">
+                        <i class="fa-solid fa-bolt"></i> ВЕТКА ДУХА
+                    </h3>
+                    <div id="tree-spirit" class="space-y-3"></div>
+                </div>
+
+                <div class="bg-[#131b2e]/60 border border-amber-500/20 rounded-2xl p-4 sm:p-5 space-y-3 sm:space-y-4">
+                    <h3 class="font-orbitron text-sm font-bold text-amber-400 flex items-center gap-2">
+                        <i class="fa-solid fa-users"></i> ВЕТКА СОЦИУМА
+                    </h3>
+                    <div id="tree-social" class="space-y-3"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== TAB 4: ACHIEVEMENTS ==================== -->
+        <section id="page-achievements" class="tab-page hidden space-y-5 sm:space-y-6">
+            <div class="bg-[#131b2e] border border-slate-800 p-4 sm:p-6 rounded-2xl">
+                <h2 class="font-orbitron font-bold text-lg sm:text-xl text-white mb-1">ЗАЛ ДОСТИЖЕНИЙ</h2>
+                <p class="text-xs text-slate-400">Открывай ачивки за успехи в реале и прокачку персонажа</p>
+            </div>
+
+            <div id="achievements-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </section>
+
+        <!-- ==================== TAB 5: ANALYTICS ==================== -->
+        <section id="page-analytics" class="tab-page hidden space-y-5 sm:space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6">
+                <div class="bg-[#131b2e] border border-slate-800 p-4 sm:p-6 rounded-2xl space-y-4">
+                    <h3 class="font-orbitron font-bold text-sm sm:text-base text-white flex items-center gap-2">
+                        <i class="fa-solid fa-chart-pie text-emerald-400"></i> МЕТРИКИ И СТАТИСТИКА
+                    </h3>
+                    
+                    <div class="space-y-3 font-rajdhani">
+                        <div class="flex justify-between items-center bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+                            <span class="text-slate-400 text-sm">Всего заработано XP</span>
+                            <span id="stat-total-xp" class="font-orbitron text-emerald-400 font-bold">0</span>
+                        </div>
+                        <div class="flex justify-between items-center bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+                            <span class="text-slate-400 text-sm">Выполнено квестов</span>
+                            <span id="stat-completed-quests" class="font-orbitron text-cyan-400 font-bold">0</span>
+                        </div>
+                        <div class="flex justify-between items-center bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+                            <span class="text-slate-400 text-sm">Текущая серия (Стрик)</span>
+                            <span id="stat-streak" class="font-orbitron text-amber-400 font-bold">0 дн.</span>
+                        </div>
+                        <div class="flex justify-between items-center bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+                            <span class="text-slate-400 text-sm">Открыто навыков</span>
+                            <span id="stat-skills-count" class="font-orbitron text-purple-400 font-bold">0 / 12</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-2 bg-[#131b2e] border border-slate-800 p-4 sm:p-6 rounded-2xl flex flex-col justify-between">
+                    <h3 class="font-orbitron font-bold text-sm sm:text-base text-white mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-spider text-cyan-400"></i> РАДАР БАЛАНСА АТРИБУТОВ
+                    </h3>
+                    <div class="relative w-full h-64 md:h-80 flex items-center justify-center">
+                        <canvas id="attributesRadarChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-[#0b0f19] border-t border-slate-800/80 py-5 text-center text-xs text-slate-500">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-2 font-rajdhani font-semibold">
+            <div>LEVEL YOURSELF SYSTEM &copy; 2026 — Автономный IRL RPG Тракер</div>
+            <div class="flex items-center gap-4">
+                <button type="button" onclick="openSettingsModal()" class="hover:text-emerald-400 transition-colors">Настройки / Сброс</button>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ==================== MODALS ==================== -->
+
+    <!-- CREATE CUSTOM QUEST MODAL -->
+    <div id="modal-custom-quest" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-[#131b2e] border border-slate-800 rounded-2xl w-full max-w-md p-5 sm:p-6 shadow-2xl relative">
+            <button type="button" onclick="closeCustomQuestModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <h3 class="font-orbitron font-bold text-base sm:text-lg text-white mb-4">СОЗДАТЬ СВОЙ КВЕСТ</h3>
+            
+            <form onsubmit="handleCreateQuest(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-rajdhani font-bold text-slate-400 mb-1">НАЗВАНИЕ КВЕСТА</label>
+                    <input type="text" id="custom-quest-title" required placeholder="Например: Пробежать 5 км" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-rajdhani font-bold text-slate-400 mb-1">КАТЕГОРИЯ</label>
+                        <select id="custom-quest-category" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500 font-rajdhani font-bold">
+                            <option value="daily">Ежедневный</option>
+                            <option value="main">Сюжетный</option>
+                            <option value="hardcore">Хардкор</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-rajdhani font-bold text-slate-400 mb-1">АТРИБУТ</label>
+                        <select id="custom-quest-attr" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500 font-rajdhani font-bold">
+                            <option value="body">Тело</option>
+                            <option value="mind">Ум</option>
+                            <option value="spirit">Дух</option>
+                            <option value="social">Социум</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-rajdhani font-bold text-slate-400 mb-1">НАГРАДА XP (10 - 500)</label>
+                    <input type="number" id="custom-quest-xp" min="10" max="500" value="50" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-rajdhani font-bold py-2.5 rounded-xl transition-all shadow-[0_0_15px_rgba(0,255,102,0.3)]">
+                        ДОБАВИТЬ КВЕСТ
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- SETTINGS & RESET MODAL -->
+    <div id="modal-settings" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-[#131b2e] border border-slate-800 rounded-2xl w-full max-w-md p-5 sm:p-6 shadow-2xl relative space-y-5">
+            <button type="button" onclick="closeSettingsModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <h3 class="font-orbitron font-bold text-base sm:text-lg text-white">НАСТРОЙКИ ПЛАТФОРМЫ</h3>
+
+            <div class="space-y-3 font-rajdhani">
+                <div class="p-4 bg-slate-900/60 rounded-xl border border-slate-800 space-y-2">
+                    <h4 class="font-bold text-white text-sm">Звуковые эффекты</h4>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-slate-400">Синтезатор кликов и XP</span>
+                        <input type="checkbox" id="setting-sound" checked class="w-4 h-4 accent-emerald-500 cursor-pointer">
+                    </div>
+                </div>
+
+                <div class="p-4 bg-red-950/20 rounded-xl border border-red-500/30 space-y-2">
+                    <h4 class="font-bold text-red-400 text-sm">Опасная зона</h4>
+                    <p class="text-xs text-slate-400">Сбросить весь имеющийся прогресс, навыки и уровень в 0.</p>
+                    <button type="button" onclick="resetAllProgress()" class="w-full bg-red-600/80 hover:bg-red-600 text-white font-bold py-2.5 rounded-xl text-xs transition-all">
+                        СБРОСИТЬ ВЕСЬ ПРОГРЕСС
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LEVEL UP CONGRATS OVERLAY -->
+    <div id="overlay-levelup" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md hidden flex-col items-center justify-center p-4">
+        <div class="text-center space-y-4 max-w-md">
+            <div class="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-full bg-gradient-to-tr from-emerald-500 to-cyan-400 flex items-center justify-center text-black font-orbitron font-black text-3xl sm:text-4xl shadow-[0_0_50px_rgba(0,255,102,0.8)] levelup-anim">
+                <i class="fa-solid fa-angles-up"></i>
+            </div>
+            <h2 class="font-orbitron font-black text-2xl sm:text-3xl text-emerald-400 tracking-wider">LEVEL UP!</h2>
+            <p class="text-slate-300 font-rajdhani text-base sm:text-lg">Поздравляем! Вы достигли уровня <span id="levelup-lvl-num" class="text-emerald-400 font-bold text-xl sm:text-2xl">2</span></p>
+            <div class="text-xs text-cyan-400 font-orbitron">+1 Очко навыков (SP) получено</div>
+            <button type="button" onclick="closeLevelUpModal()" class="mt-6 bg-emerald-500 hover:bg-emerald-400 text-black font-rajdhani font-bold px-8 py-3 rounded-xl transition-all shadow-[0_0_20px_rgba(0,255,102,0.4)]">
+                ПРОДОЛЖИТЬ ПРОКАЧКУ
+            </button>
+        </div>
+    </div>
+
+    <script>
+
+        const STORAGE_KEY = 'LEVEL_YOURSELF_DATA_V2';
+
+        function getLocalDate(date = new Date()) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function getDateDifference(date1, date2) {
+            if (!date1 || !date2) return null;
+            const [y1, m1, d1] = date1.split('-').map(Number);
+            const [y2, m2, d2] = date2.split('-').map(Number);
+            if (![y1, m1, d1, y2, m2, d2].every(Number.isFinite)) return null;
+            return Math.round((Date.UTC(y2, m2 - 1, d2) - Date.UTC(y1, m1 - 1, d1)) / 86400000);
+        }
+
+        function createDefaultState() {
+            return {
+                level: 1,
+                xp: 0,
+                totalXpEarned: 0,
+                sp: 0,
+                streak: 0,
+                lastActivityDate: null,
+                lastQuestDate: null,
+                lastManualRefreshDate: null,
+                completedQuestsCount: 0,
+                attributes: { body: 0, mind: 0, spirit: 0, social: 0 },
+                unlockedSkills: [],
+                unlockedAchievements: [],
+                activityLogs: [],
+                quests: [],
+                settings: { sound: true }
+            };
+        }
+
+        const defaultState = createDefaultState();
+
+        const QUEST_POOL = [
+            { titleTemplate: "{val} отжиманий или утренняя разминка", category: 'daily', attr: 'body', baseVal: 20, valMultiplier: 5, baseXP: 35 },
+            { titleTemplate: "Бег или быстрая ходьба ({val} минут)", category: 'daily', attr: 'body', baseVal: 15, valMultiplier: 5, baseXP: 40 },
+            { titleTemplate: "Планка {val} секунд", category: 'daily', attr: 'body', baseVal: 45, valMultiplier: 15, baseXP: 30 },
+            { titleTemplate: "{val} приседаний за день", category: 'daily', attr: 'body', baseVal: 30, valMultiplier: 10, baseXP: 35 },
+            { titleTemplate: "Выпить {val} стаканов чистой воды", category: 'daily', attr: 'body', baseVal: 5, valMultiplier: 1, baseXP: 25 },
+            { titleTemplate: "Пройти {val} шагов за день", category: 'main', attr: 'body', baseVal: 6000, valMultiplier: 1000, baseXP: 85 },
+            { titleTemplate: "Полноценная тренировка ({val} минут)", category: 'hardcore', attr: 'body', baseVal: 45, valMultiplier: 10, baseXP: 130 },
+
+            { titleTemplate: "Чтение полезной книги ({val} стр.)", category: 'daily', attr: 'mind', baseVal: 15, valMultiplier: 5, baseXP: 40 },
+            { titleTemplate: "Фокусированная работа/учеба ({val} мин)", category: 'daily', attr: 'mind', baseVal: 35, valMultiplier: 10, baseXP: 45 },
+            { titleTemplate: "Изучение иностранного языка ({val} слов)", category: 'daily', attr: 'mind', baseVal: 10, valMultiplier: 3, baseXP: 35 },
+            { titleTemplate: "Решить {val} логических задач / кроссворд", category: 'daily', attr: 'mind', baseVal: 3, valMultiplier: 1, baseXP: 30 },
+            { titleTemplate: "Изучение нового навыка или кодинг ({val} мин)", category: 'main', attr: 'mind', baseVal: 50, valMultiplier: 15, baseXP: 90 },
+            { titleTemplate: "Глубокая сессия без отвлечений ({val} мин)", category: 'hardcore', attr: 'mind', baseVal: 90, valMultiplier: 15, baseXP: 140 },
+
+            { titleTemplate: "Медитация или дыхательная практика ({val} мин)", category: 'daily', attr: 'spirit', baseVal: 10, valMultiplier: 3, baseXP: 35 },
+            { titleTemplate: "Контрастный душ ({val} мин)", category: 'daily', attr: 'spirit', baseVal: 2, valMultiplier: 1, baseXP: 30 },
+            { titleTemplate: "Записать {val} целей или благодарностей за день", category: 'daily', attr: 'spirit', baseVal: 3, valMultiplier: 1, baseXP: 25 },
+            { titleTemplate: "Вечер без экрана за {val} мин до сна", category: 'main', attr: 'spirit', baseVal: 40, valMultiplier: 10, baseXP: 75 },
+            { titleTemplate: "Цифровой детокс ({val} ч. без соцсетей)", category: 'hardcore', attr: 'spirit', baseVal: 4, valMultiplier: 1, baseXP: 125 },
+
+            { titleTemplate: "Написать или позвонить {val} друзьям/близким", category: 'daily', attr: 'social', baseVal: 1, valMultiplier: 1, baseXP: 30 },
+            { titleTemplate: "Сделать {val} искренних комплиментов", category: 'daily', attr: 'social', baseVal: 2, valMultiplier: 1, baseXP: 25 },
+            { titleTemplate: "Провести {val} мин качественного живого общения", category: 'daily', attr: 'social', baseVal: 20, valMultiplier: 10, baseXP: 40 },
+            { titleTemplate: "Помочь кому-то делом или советом ({val} раз)", category: 'main', attr: 'social', baseVal: 1, valMultiplier: 1, baseXP: 70 },
+            { titleTemplate: "Новое знакомство или нетворкинг ({val} чел.)", category: 'hardcore', attr: 'social', baseVal: 1, valMultiplier: 1, baseXP: 120 }
+        ];
+
+        const QUOTES = [
+            "«Дисциплина — это мост между целями и их достижением.»",
+            "«Каждый выполненный квест делает тебя сильнее вчерашней версии.»",
+            "«Маленькие ежедневные победы создают легендарный результат.»",
+            "«Твоя жизнь — это главная RPG. Прокачивай характеристики осознанно.»"
+        ];
+
+        let state = loadState();
+        let radarChart = null;
+
+        function hashString(str) {
+            let hash = 2166136261;
+            const s = String(str);
+            for (let i = 0; i < s.length; i++) {
+                hash ^= s.charCodeAt(i);
+                hash = Math.imul(hash, 16777619);
+            }
+            return (hash >>> 0) || 123456;
+        }
+
+        function createRng(seedStr) {
+            let a = hashString(seedStr);
+            return function() {
+                let t = a += 0x6D2B79F5;
+                t = Math.imul(t ^ t >>> 15, t | 1);
+                t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+                return ((t ^ t >>> 14) >>> 0) / 4294967296;
+            };
+        }
+
+        function shuffleWithRng(arr, rng) {
+            const copy = [...arr];
+            for (let i = copy.length - 1; i > 0; i--) {
+                const j = Math.floor(rng() * (i + 1));
+                [copy[i], copy[j]] = [copy[j], copy[i]];
+            }
+            return copy;
+        }
+
+        function generateScaledQuests(level, seedStr) {
+            const rng = createRng(seedStr);
+
+            const dailyPool = shuffleWithRng(QUEST_POOL.filter(q => q.category === 'daily'), rng);
+            const mainPool = shuffleWithRng(QUEST_POOL.filter(q => q.category === 'main'), rng);
+            const hardcorePool = shuffleWithRng(QUEST_POOL.filter(q => q.category === 'hardcore'), rng);
+
+            const selectedDaily = [];
+            const usedAttrs = new Set();
+
+            for (const item of dailyPool) {
+                if (!usedAttrs.has(item.attr) && selectedDaily.length < 4) {
+                    selectedDaily.push(item);
+                    usedAttrs.add(item.attr);
+                }
+            }
+            for (const item of dailyPool) {
+                if (selectedDaily.length < 4 && !selectedDaily.includes(item)) {
+                    selectedDaily.push(item);
+                }
+            }
+
+            const selectedTemplates = [
+                ...selectedDaily,
+                ...mainPool.slice(0, 2),
+                ...hardcorePool.slice(0, 1)
+            ];
+
+            return selectedTemplates.map((template, idx) => {
+                const scaledVal = template.baseVal + ((level - 1) * template.valMultiplier);
+                const scaledXP = Math.round(template.baseXP * (1 + (level - 1) * 0.15));
+
+                return {
+                    id: `gen_q_${hashString(seedStr)}_${idx}_${Math.floor(rng() * 10000)}`,
+                    title: template.titleTemplate.replace('{val}', scaledVal),
+                    category: template.category,
+                    attr: template.attr,
+                    xp: scaledXP,
+                    completed: false
+                };
+            });
+        }
+
+        const SKILL_TREES = {
+            body: [
+                { id: 'sk_b1', title: 'Железная воля', desc: '+15% XP за физические квесты', cost: 1 },
+                { id: 'sk_b2', title: 'Стальной пресс', desc: '+10% ко всему получаемому опыту', cost: 2 },
+                { id: 'sk_b3', title: 'Атлет IRL', desc: '+25% XP за квесты Тела', cost: 3 }
+            ],
+            mind: [
+                { id: 'sk_m1', title: 'Глубокий Фокус', desc: '+15% XP за интеллектуальные квесты', cost: 1 },
+                { id: 'sk_m2', title: 'Быстрая Память', desc: '+10% ко всему получаемому опыту', cost: 2 },
+                { id: 'sk_m3', title: 'Архитектор', desc: '+25% XP за квесты Ума', cost: 3 }
+            ],
+            spirit: [
+                { id: 'sk_s1', title: 'Дзен', desc: '+15% XP за духовные практики', cost: 1 },
+                { id: 'sk_s2', title: 'Дисциплина Тренча', desc: '+10% ко всему получаемому опыту', cost: 2 },
+                { id: 'sk_s3', title: 'Непоколебимость', desc: '+25% XP за квесты Духа', cost: 3 }
+            ],
+            social: [
+                { id: 'sk_so1', title: 'Харизма I', desc: '+15% XP за социальные квесты', cost: 1 },
+                { id: 'sk_so2', title: 'Оратор', desc: '+10% ко всему получаемому опыту', cost: 2 },
+                { id: 'sk_so3', title: 'Лидер Клана', desc: '+25% XP за квесты Социума', cost: 3 }
+            ]
+        };
+
+        const ACHIEVEMENTS_LIST = [
+            { id: 'ach_1', title: 'Первый Шаг', desc: 'Выполни свой самый первый квест', icon: 'fa-shoe-prints', req: (s) => s.completedQuestsCount >= 1 },
+            { id: 'ach_2', title: 'Воин Дисциплины', desc: 'Удерживай стрик в течение 3 дней', icon: 'fa-fire', req: (s) => s.streak >= 3 },
+            { id: 'ach_3', title: 'Прокачанный Разум', desc: 'Достигни 100+ XP в атрибуте УМ', icon: 'fa-brain', req: (s) => s.attributes.mind >= 100 },
+            { id: 'ach_4', title: 'Крепыш', desc: 'Достигни 100+ XP в атрибуте ТЕЛО', icon: 'fa-dumbbell', req: (s) => s.attributes.body >= 100 },
+            { id: 'ach_5', title: 'Уровень 5', desc: 'Достигни 5-го уровня персонажа', icon: 'fa-crown', req: (s) => s.level >= 5 },
+            { id: 'ach_6', title: 'Мастер Навыков', desc: 'Разблокируй хотя бы 3 пассивных навыка', icon: 'fa-sitemap', req: (s) => s.unlockedSkills.length >= 3 }
+        ];
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const soundToggle = document.getElementById('setting-sound');
+            if (soundToggle) {
+                soundToggle.checked = state.settings.sound;
+                soundToggle.addEventListener('change', () => {
+                    state.settings.sound = soundToggle.checked;
+                    saveState();
+                    if (soundToggle.checked) playSound('complete');
+                });
+            }
+
+            checkStreakAndDailyQuests();
+            setRandomQuote();
+            updateUI();
+        });
+
+        function setRandomQuote() {
+            const el = document.getElementById('daily-quote');
+            if (el) {
+                el.innerText = QUOTES[Math.floor(Math.random() * QUOTES.length)];
+            }
+        }
+
+        function loadState() {
+            const fallback = createDefaultState();
+
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) return fallback;
+
+                const parsed = JSON.parse(raw);
+                if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return fallback;
+
+                const numberOr = (value, defaultValue, min = 0) =>
+                    Number.isFinite(Number(value)) && Number(value) >= min ? Number(value) : defaultValue;
+
+                const validDate = value =>
+                    typeof value === 'string' && /^\\d{4}-\\d{2}-\\d{2}$/.test(value) ? value : null;
+
+                const attrs = parsed.attributes && typeof parsed.attributes === 'object'
+                    ? parsed.attributes : {};
+
+                const quests = Array.isArray(parsed.quests) ? parsed.quests.filter(q =>
+                    q && typeof q === 'object' &&
+                    typeof q.id === 'string' && typeof q.title === 'string' &&
+                    ['daily', 'main', 'hardcore'].includes(q.category) &&
+                    ['body', 'mind', 'spirit', 'social'].includes(q.attr) &&
+                    Number.isFinite(Number(q.xp)) && Number(q.xp) >= 0
+                ).map(q => ({ ...q, xp: Number(q.xp), completed: q.completed === true })) : [];
+
+                const settings = parsed.settings && typeof parsed.settings === 'object'
+                    ? parsed.settings : {};
+
+                // Старые сохранения использовали вход в приложение для подсчёта стрика.
+                // Такой вход не подтверждает выполнение квеста, поэтому новый стрик начинается с 0.
+                const hasActivityTracking = Object.prototype.hasOwnProperty.call(parsed, 'lastActivityDate');
+
+                return {
+                    level: Math.floor(numberOr(parsed.level, 1, 1)),
+                    xp: numberOr(parsed.xp, 0),
+                    totalXpEarned: numberOr(parsed.totalXpEarned, 0),
+                    sp: Math.floor(numberOr(parsed.sp, 0)),
+                    streak: hasActivityTracking ? Math.floor(numberOr(parsed.streak, 0)) : 0,
+                    lastActivityDate: hasActivityTracking ? validDate(parsed.lastActivityDate) : null,
+                    lastQuestDate: validDate(parsed.lastQuestDate),
+                    lastManualRefreshDate: validDate(parsed.lastManualRefreshDate),
+                    completedQuestsCount: Math.floor(numberOr(parsed.completedQuestsCount, 0)),
+                    attributes: {
+                        body: numberOr(attrs.body, 0),
+                        mind: numberOr(attrs.mind, 0),
+                        spirit: numberOr(attrs.spirit, 0),
+                        social: numberOr(attrs.social, 0)
+                    },
+                    unlockedSkills: Array.isArray(parsed.unlockedSkills)
+                        ? parsed.unlockedSkills.filter(x => typeof x === 'string') : [],
+                    unlockedAchievements: Array.isArray(parsed.unlockedAchievements)
+                        ? parsed.unlockedAchievements.filter(x => typeof x === 'string') : [],
+                    activityLogs: Array.isArray(parsed.activityLogs)
+                        ? parsed.activityLogs.filter(x => x && typeof x.msg === 'string' && typeof x.time === 'string').slice(0, 25)
+                        : [],
+                    quests,
+                    settings: { sound: settings.sound !== false }
+                };
+            } catch (e) {
+                console.error('Ошибка загрузки сохранения:', e);
+                return fallback;
+            }
+        }
+
+        function saveState() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+                return true;
+            } catch (e) {
+                console.error('Ошибка сохранения:', e);
+                return false;
+            }
+        }
+
+        function checkStreakAndDailyQuests() {
+            const today = getLocalDate();
+
+            if (state.lastQuestDate !== today || !Array.isArray(state.quests) || state.quests.length === 0) {
+                const customQuests = state.quests.filter(q => q.id && q.id.startsWith('custom_'));
+                state.quests = [...generateScaledQuests(state.level, today), ...customQuests];
+                state.lastQuestDate = today;
+            }
+
+            // Стрик меняется только при выполнении первого квеста за текущий день.
+            saveState();
+        }
+
+        function getRequiredXP(level) {
+            return level * 250;
+        }
+
+        function getRankTitle(level) {
+            if (level < 3) return 'НОВИЧОК';
+            if (level < 7) return 'ИСКАТЕЛЬ';
+            if (level < 12) return 'ВОИН ДИСЦИПЛИНЫ';
+            if (level < 20) return 'ЭЛИТНЫЙ АТЛЕТ';
+            return 'ВЫСШИЙ ГРАНДМАСТЕР';
+        }
+
+        function calculateQuestReward(baseXp, attr) {
+            let multiplier = 1;
+            const s = state.unlockedSkills;
+
+            if (s.includes('sk_b2')) multiplier += 0.10;
+            if (s.includes('sk_m2')) multiplier += 0.10;
+            if (s.includes('sk_s2')) multiplier += 0.10;
+            if (s.includes('sk_so2')) multiplier += 0.10;
+
+            if (attr === 'body') {
+                if (s.includes('sk_b1')) multiplier += 0.15;
+                if (s.includes('sk_b3')) multiplier += 0.25;
+            } else if (attr === 'mind') {
+                if (s.includes('sk_m1')) multiplier += 0.15;
+                if (s.includes('sk_m3')) multiplier += 0.25;
+            } else if (attr === 'spirit') {
+                if (s.includes('sk_s1')) multiplier += 0.15;
+                if (s.includes('sk_s3')) multiplier += 0.25;
+            } else if (attr === 'social') {
+                if (s.includes('sk_so1')) multiplier += 0.15;
+                if (s.includes('sk_so3')) multiplier += 0.25;
+            }
+
+            return Math.round(baseXp * multiplier);
+        }
+
+        function playSound(type) {
+            if (!state.settings || state.settings.sound !== true) return;
+
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                if (type === 'complete') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(440, ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15);
+                    gain.gain.setValueAtTime(0.25, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.15);
+                } else if (type === 'levelup') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(300, ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.4);
+                    gain.gain.setValueAtTime(0.35, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.4);
+                }
+            } catch (e) {}
+        }
+
+        function updateUI() {
+            document.getElementById('player-level').innerText = state.level;
+            document.getElementById('rank-badge').innerText = getRankTitle(state.level);
+            
+            const questsLvlLabel = document.getElementById('quests-lvl-label');
+            if (questsLvlLabel) questsLvlLabel.innerText = `Ур. ${state.level}`;
+
+            const reqXP = getRequiredXP(state.level);
+            document.getElementById('current-xp').innerText = state.xp;
+            document.getElementById('next-level-xp').innerText = reqXP;
+            
+            const xpPct = Math.min(100, Math.floor((state.xp / reqXP) * 100));
+            document.getElementById('xp-bar').style.width = `${xpPct}%`;
+
+            document.getElementById('streak-count').innerText = state.streak;
+            document.getElementById('streak-count-mobile').innerText = state.streak;
+            document.getElementById('sp-count').innerText = state.sp;
+            document.getElementById('sp-count-mobile').innerText = state.sp;
+            document.getElementById('skill-tree-sp').innerText = state.sp;
+
+            ['body', 'mind', 'spirit', 'social'].forEach(attr => {
+                const xpVal = state.attributes[attr];
+                const attrLvl = Math.floor(xpVal / 100) + 1;
+                const barPct = xpVal % 100;
+
+                document.getElementById(`attr-lvl-${attr}`).innerText = attrLvl;
+                document.getElementById(`attr-xp-${attr}`).innerText = xpVal;
+                document.getElementById(`attr-bar-${attr}`).style.width = `${barPct}%`;
+            });
+
+            const computedTotalXp = state.totalXpEarned || (state.xp + ((state.level - 1) * 250));
+            document.getElementById('stat-total-xp').innerText = computedTotalXp;
+            document.getElementById('stat-completed-quests').innerText = state.completedQuestsCount;
+            document.getElementById('stat-streak').innerText = `${state.streak} дн.`;
+            document.getElementById('stat-skills-count').innerText = `${state.unlockedSkills.length} / 12`;
+
+            renderDashboardQuests();
+            renderQuests();
+            renderSkillTrees();
+            renderAchievements();
+            renderActivityLog();
+            checkAchievements();
+            updateRadarChart();
+        }
+
+        function renderDashboardQuests() {
+            const container = document.getElementById('dash-quests-container');
+            const dailyQuests = state.quests.filter(q => q.category === 'daily').slice(0, 4);
+
+            if (dailyQuests.length === 0) {
+                container.innerHTML = `<div class="text-slate-500 text-xs py-4 text-center">Нажми «Сгенерировать новые квесты», чтобы получить задачи!</div>`;
+                return;
+            }
+
+            container.innerHTML = dailyQuests.map(q => {
+                const finalXp = calculateQuestReward(q.xp, q.attr);
+                return `
+                <div class="flex items-center justify-between gap-2 bg-slate-900/60 border border-slate-800 p-3 rounded-xl hover:border-slate-700 transition-all ${q.completed ? 'opacity-50' : ''}">
+                    <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                        <div class="w-8 h-8 shrink-0 rounded-lg flex items-center justify-center text-xs font-bold ${getAttrColorBg(q.attr)}">
+                            <i class="${getAttrIcon(q.attr)}"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="text-xs sm:text-sm font-semibold text-white truncate ${q.completed ? 'line-through text-slate-400' : ''}">${q.title}</div>
+                            <div class="text-[10px] text-slate-400 font-orbitron">+${finalXp} XP • ${getAttrLabel(q.attr)}</div>
+                        </div>
+                    </div>
+                    <button type="button" onclick="completeQuest('${q.id}', event)" ${q.completed ? 'disabled' : ''} class="shrink-0 ${q.completed ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : 'bg-emerald-500/20 hover:bg-emerald-500 hover:text-black text-emerald-400 border border-emerald-500/40'} text-[11px] sm:text-xs font-rajdhani font-bold px-2.5 sm:px-3 py-1.5 rounded-lg transition-all">
+                        ${q.completed ? 'ГОТОВО' : 'ВЫПОЛНИТЬ'}
+                    </button>
+                </div>
+            `}).join('');
+        }
+
+        function renderQuests() {
+            const container = document.getElementById('quests-container');
+            const filter = document.getElementById('quest-filter').value;
+            
+            let filtered = state.quests;
+            if (filter !== 'all') {
+                filtered = state.quests.filter(q => q.category === filter);
+            }
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-center py-8 text-slate-500 text-sm bg-[#131b2e] border border-slate-800 rounded-2xl">В этой категории пока нет квестов. Нажмите «Обновить» или создайте свой!</div>`;
+                return;
+            }
+
+            container.innerHTML = filtered.map(q => {
+                const finalXp = calculateQuestReward(q.xp, q.attr);
+                return `
+                <div class="bg-[#131b2e] border border-slate-800 rounded-2xl p-4 sm:p-5 flex flex-col justify-between hover:border-emerald-500/30 transition-all relative ${q.completed ? 'opacity-60' : ''}">
+                    <div>
+                        <div class="flex justify-between items-start mb-3">
+                            <span class="text-[10px] font-orbitron font-bold uppercase px-2 py-0.5 rounded border ${getCategoryBadgeStyle(q.category)}">
+                                ${getCategoryLabel(q.category)}
+                            </span>
+                            <span class="text-xs font-orbitron font-bold text-emerald-400">+${finalXp} XP</span>
+                        </div>
+                        <h4 class="font-rajdhani font-bold text-base text-white mb-2 ${q.completed ? 'line-through text-slate-400' : ''}">${q.title}</h4>
+                    </div>
+
+                    <div class="flex items-center justify-between mt-4 pt-3 border-t border-slate-800/80">
+                        <span class="text-xs text-slate-400 font-rajdhani font-bold flex items-center gap-1.5">
+                            <i class="${getAttrIcon(q.attr)}"></i> ${getAttrLabel(q.attr)}
+                        </span>
+                        <div class="flex items-center gap-2">
+                            ${q.id.startsWith('custom_') ? `
+                                <button type="button" onclick="deleteCustomQuest('${q.id}')" title="Удалить квест" class="text-slate-500 hover:text-red-400 p-1.5 transition-colors">
+                                    <i class="fa-solid fa-trash text-xs"></i>
+                                </button>
+                            ` : ''}
+                            <button type="button" onclick="completeQuest('${q.id}', event)" ${q.completed ? 'disabled' : ''} class="${q.completed ? 'bg-slate-800 text-slate-500 border border-slate-700' : 'bg-emerald-500 hover:bg-emerald-400 text-black shadow-[0_0_10px_rgba(0,255,102,0.3)]'} text-xs font-rajdhani font-bold px-3.5 sm:px-4 py-2 rounded-xl transition-all">
+                                ${q.completed ? 'ВЫПОЛНЕНО' : 'ВЫПОЛНИТЬ'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        function deleteCustomQuest(questId) {
+            state.quests = state.quests.filter(q => q.id !== questId);
+            saveState();
+            updateUI();
+        }
+
+        function completeQuest(questId, event) {
+            const quest = state.quests.find(q => q.id === questId);
+            if (!quest || quest.completed) return;
+
+            const earnedXp = calculateQuestReward(quest.xp, quest.attr);
+
+            quest.completed = true;
+
+            const today = getLocalDate();
+            if (state.lastActivityDate !== today) {
+                const dayGap = getDateDifference(state.lastActivityDate, today);
+                state.streak = dayGap === 1 ? state.streak + 1 : 1;
+                state.lastActivityDate = today;
+            }
+
+            state.xp += earnedXp;
+            state.totalXpEarned = (state.totalXpEarned || 0) + earnedXp;
+            state.attributes[quest.attr] += Math.max(5, Math.floor(earnedXp / 2));
+            state.completedQuestsCount += 1;
+
+            const clickX = event?.clientX || window.innerWidth / 2;
+            const clickY = event?.clientY || window.innerHeight / 2;
+            createXpPop(`+${earnedXp} XP`, clickX, clickY);
+            playSound('complete');
+            logActivity(`Выполнен квест: «${quest.title}» (+${earnedXp} XP)`);
+
+            let leveledUp = false;
+            while (state.xp >= getRequiredXP(state.level)) {
+                state.xp -= getRequiredXP(state.level);
+                state.level += 1;
+                state.sp += 1;
+                leveledUp = true;
+            }
+
+            if (leveledUp) {
+                playSound('levelup');
+                showLevelUpModal(state.level);
+                logActivity(`🎉 ПОВЫШЕНИЕ УРОВНЯ! Достигнут уровень ${state.level}!`);
+            }
+
+            saveState();
+            updateUI();
+        }
+
+        function createXpPop(text, x, y) {
+            const el = document.createElement('div');
+            el.className = 'xp-pop';
+            el.innerText = text;
+            const safeX = Math.min(Math.max(x, 60), window.innerWidth - 60);
+            const safeY = Math.min(Math.max(y, 60), window.innerHeight - 60);
+            el.style.left = `${safeX}px`;
+            el.style.top = `${safeY}px`;
+            document.body.appendChild(el);
+
+            setTimeout(() => {
+                el.remove();
+            }, 1200);
+        }
+
+        function renderSkillTrees() {
+            ['body', 'mind', 'spirit', 'social'].forEach(cat => {
+                const container = document.getElementById(`tree-${cat}`);
+                const skills = SKILL_TREES[cat];
+
+                container.innerHTML = skills.map(sk => {
+                    const isUnlocked = state.unlockedSkills.includes(sk.id);
+                    const canUnlock = state.sp >= sk.cost && !isUnlocked;
+
+                    return `
+                        <div class="p-3 rounded-xl border ${isUnlocked ? 'bg-emerald-950/20 border-emerald-500/50' : 'bg-slate-900/60 border-slate-800'} transition-all">
+                            <div class="flex justify-between items-start mb-1">
+                                <span class="font-rajdhani font-bold text-sm text-white">${sk.title}</span>
+                                <span class="text-[10px] font-orbitron ${isUnlocked ? 'text-emerald-400 font-bold' : 'text-cyan-400'}">
+                                    ${isUnlocked ? 'ОТКРЫТО' : sk.cost + ' SP'}
+                                </span>
+                            </div>
+                            <p class="text-[11px] text-slate-400 mb-2">${sk.desc}</p>
+                            ${!isUnlocked ? `
+                                <button type="button" onclick="unlockSkill('${sk.id}', ${sk.cost})" ${!canUnlock ? 'disabled' : ''} class="w-full py-1.5 text-xs font-rajdhani font-bold rounded-lg transition-all ${canUnlock ? 'bg-cyan-500 hover:bg-cyan-400 text-black' : 'bg-slate-800 text-slate-500 cursor-not-allowed'}">
+                                    ОТКРЫТЬ НАВЫК
+                                </button>
+                            ` : ''}
+                        </div>
+                    `;
+                }).join('');
+            });
+        }
+
+        function unlockSkill(skillId, cost) {
+            if (state.sp >= cost && !state.unlockedSkills.includes(skillId)) {
+                state.sp -= cost;
+                state.unlockedSkills.push(skillId);
+                playSound('complete');
+                logActivity(`Открыт новый пассивный навык!`);
+                saveState();
+                updateUI();
+            }
+        }
+
+        function renderAchievements() {
+            const container = document.getElementById('achievements-container');
+            container.innerHTML = ACHIEVEMENTS_LIST.map(ach => {
+                const isUnlocked = state.unlockedAchievements.includes(ach.id);
+                return `
+                    <div class="p-4 rounded-2xl border ${isUnlocked ? 'bg-amber-950/20 border-amber-500/50' : 'bg-[#131b2e] border-slate-800 opacity-50'} flex items-center gap-4 transition-all">
+                        <div class="w-12 h-12 shrink-0 rounded-xl flex items-center justify-center text-xl font-bold ${isUnlocked ? 'bg-amber-500 text-black shadow-[0_0_15px_rgba(255,215,0,0.4)]' : 'bg-slate-800 text-slate-500'}">
+                            <i class="fa-solid ${ach.icon}"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-rajdhani font-bold text-base ${isUnlocked ? 'text-amber-400' : 'text-slate-300'}">${ach.title}</h4>
+                            <p class="text-xs text-slate-400">${ach.desc}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function checkAchievements() {
+            let changed = false;
+            ACHIEVEMENTS_LIST.forEach(ach => {
+                if (!state.unlockedAchievements.includes(ach.id) && ach.req(state)) {
+                    state.unlockedAchievements.push(ach.id);
+                    logActivity(`🏆 Достижение: «${ach.title}»!`);
+                    createXpPop(`🏆 АЧИВКА!`, window.innerWidth / 2, 100);
+                    changed = true;
+                }
+            });
+            if (changed) {
+                saveState();
+                renderAchievements();
+            }
+        }
+
+        function logActivity(msg) {
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            state.activityLogs.unshift({ time, msg });
+            if (state.activityLogs.length > 25) state.activityLogs.pop();
+        }
+
+        function renderActivityLog() {
+            const container = document.getElementById('activity-log');
+            if (state.activityLogs.length === 0) {
+                container.innerHTML = `<div class="text-slate-500 text-center py-4">История активности пуста. Выполни первый квест!</div>`;
+                return;
+            }
+
+            container.innerHTML = state.activityLogs.map(log => `
+                <div class="flex items-start gap-2 border-b border-slate-800/60 pb-2">
+                    <span class="text-slate-500 font-orbitron text-[10px] shrink-0 mt-0.5">${log.time}</span>
+                    <span class="text-slate-300 break-words">${log.msg}</span>
+                </div>
+            `).join('');
+        }
+
+        function initRadarChart() {
+            const canvas = document.getElementById('attributesRadarChart');
+            if (!canvas || typeof Chart === 'undefined') return;
+            const ctx = canvas.getContext('2d');
+            if (radarChart) {
+                radarChart.destroy();
+            }
+            radarChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['ТЕЛО', 'УМ', 'ДУХ', 'СОЦИУМ'],
+                    datasets: [{
+                        label: 'Опыт атрибута',
+                        data: [
+                            state.attributes.body,
+                            state.attributes.mind,
+                            state.attributes.spirit,
+                            state.attributes.social
+                        ],
+                        backgroundColor: 'rgba(0, 255, 102, 0.2)',
+                        borderColor: '#00ff66',
+                        pointBackgroundColor: '#00d2ff',
+                        pointBorderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            angleLines: { color: 'rgba(255, 255, 255, 0.1)' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            pointLabels: {
+                                color: '#00ff66',
+                                font: { family: 'Orbitron', size: 11, weight: 'bold' }
+                            },
+                            ticks: { display: false }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        function updateRadarChart() {
+            if (!radarChart) {
+                initRadarChart();
+                return;
+            }
+            radarChart.data.datasets[0].data = [
+                state.attributes.body,
+                state.attributes.mind,
+                state.attributes.spirit,
+                state.attributes.social
+            ];
+            radarChart.update();
+        }
+
+        // Modal helpers without hidden+flex conflicts
+        function openCustomQuestModal() {
+            const el = document.getElementById('modal-custom-quest');
+            el.classList.remove('hidden');
+            el.classList.add('flex');
+        }
+        function closeCustomQuestModal() {
+            const el = document.getElementById('modal-custom-quest');
+            el.classList.add('hidden');
+            el.classList.remove('flex');
+        }
+
+        function handleCreateQuest(e) {
+            e.preventDefault();
+            const title = document.getElementById('custom-quest-title').value.trim();
+            const category = document.getElementById('custom-quest-category').value;
+            const attr = document.getElementById('custom-quest-attr').value;
+            const xp = parseInt(document.getElementById('custom-quest-xp').value, 10) || 50;
+
+            if (!title) return;
+
+            const newQuest = {
+                id: 'custom_' + Date.now(),
+                title,
+                category,
+                attr,
+                xp,
+                completed: false
+            };
+
+            state.quests.unshift(newQuest);
+            logActivity(`Создан свой квест: «${title}»`);
+            saveState();
+            updateUI();
+            closeCustomQuestModal();
+            document.getElementById('custom-quest-title').value = '';
+        }
+
+        function openSettingsModal() {
+            const el = document.getElementById('modal-settings');
+            el.classList.remove('hidden');
+            el.classList.add('flex');
+        }
+        function closeSettingsModal() {
+            const el = document.getElementById('modal-settings');
+            el.classList.add('hidden');
+            el.classList.remove('flex');
+        }
+
+        function resetAllProgress() {
+            if (confirm('Вы уверены, что хотите сбросить весь прогресс? Это действие нельзя отменить.')) {
+                const keepSound = state.settings?.sound !== false;
+                state = createDefaultState();
+                state.settings.sound = keepSound;
+                const today = getLocalDate();
+                state.quests = generateScaledQuests(1, today);
+                state.lastQuestDate = today;
+                logActivity('Выполнен полный сброс прогресса.');
+                saveState();
+                updateUI();
+                closeSettingsModal();
+            }
+        }
+
+        function triggerDailyReset() {
+            const today = getLocalDate();
+
+            if (state.lastManualRefreshDate === today) {
+                alert('Ручное обновление квестов доступно только один раз в день. Новые ежедневные квесты появятся автоматически завтра.');
+                return;
+            }
+
+            const uniqueSeed = `${today}_${Date.now()}_${Math.random()}`;
+            const newDaily = generateScaledQuests(state.level, uniqueSeed);
+            const customQuests = state.quests.filter(q => q.id && q.id.startsWith('custom_'));
+
+            state.quests = [...newDaily, ...customQuests];
+            state.lastManualRefreshDate = today;
+            state.lastQuestDate = today;
+
+            playSound('complete');
+            logActivity(`Сгенерирован новый список квестов (Ур. ${state.level}).`);
+            saveState();
+            updateUI();
+        }
+
+        function showLevelUpModal(lvl) {
+            document.getElementById('levelup-lvl-num').innerText = lvl;
+            const el = document.getElementById('overlay-levelup');
+            el.classList.remove('hidden');
+            el.classList.add('flex');
+        }
+        function closeLevelUpModal() {
+            const el = document.getElementById('overlay-levelup');
+            el.classList.add('hidden');
+            el.classList.remove('flex');
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-page').forEach(page => page.classList.add('hidden'));
+            document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.mobile-nav-tab').forEach(tab => tab.classList.remove('active'));
+
+            const targetPage = document.getElementById(`page-${tabId}`);
+            if (targetPage) targetPage.classList.remove('hidden');
+
+            const desktopTab = document.getElementById(`tab-${tabId}`);
+            if (desktopTab) desktopTab.classList.add('active');
+
+            const mobileTab = document.getElementById(`m-tab-${tabId}`);
+            if (mobileTab) mobileTab.classList.add('active');
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            if (tabId === 'analytics') {
+                setTimeout(() => {
+                    initRadarChart();
+                }, 60);
+            }
+        }
+
+        function getAttrIcon(attr) {
+            switch(attr) {
+                case 'body': return 'fa-solid fa-dumbbell text-red-400';
+                case 'mind': return 'fa-solid fa-brain text-cyan-400';
+                case 'spirit': return 'fa-solid fa-bolt text-purple-400';
+                case 'social': return 'fa-solid fa-users text-amber-400';
+                default: return 'fa-solid fa-star';
+            }
+        }
+
+        function getAttrLabel(attr) {
+            switch(attr) {
+                case 'body': return 'ТЕЛО';
+                case 'mind': return 'УМ';
+                case 'spirit': return 'ДУХ';
+                case 'social': return 'СОЦИУМ';
+                default: return attr.toUpperCase();
+            }
+        }
+
+        function getAttrColorBg(attr) {
+            switch(attr) {
+                case 'body': return 'bg-red-500/10 text-red-400';
+                case 'mind': return 'bg-cyan-500/10 text-cyan-400';
+                case 'spirit': return 'bg-purple-500/10 text-purple-400';
+                case 'social': return 'bg-amber-500/10 text-amber-400';
+                default: return 'bg-slate-800 text-white';
+            }
+        }
+
+        function getCategoryBadgeStyle(cat) {
+            switch(cat) {
+                case 'daily': return 'border-emerald-500/40 text-emerald-400 bg-emerald-950/30';
+                case 'main': return 'border-cyan-500/40 text-cyan-400 bg-cyan-950/30';
+                case 'hardcore': return 'border-red-500/40 text-red-400 bg-red-950/30';
+                default: return 'border-slate-700 text-slate-400';
+            }
+        }
+
+        function getCategoryLabel(cat) {
+            switch(cat) {
+                case 'daily': return 'ЕЖЕДНЕВНЫЙ';
+                case 'main': return 'СЮЖЕТНЫЙ';
+                case 'hardcore': return 'ХАРДКОР';
+                default: return cat;
+            }
+        }
+    
+    </script>
+</body>
+</html>
